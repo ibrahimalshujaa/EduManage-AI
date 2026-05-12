@@ -101,8 +101,8 @@ python app.py
 | Identity | Username (Email) | Password |
 | :--- | :--- | :--- |
 | **Administrator** | `admin@edumanage.com` | `admin123` |
-| **Teacher** | `mehmet.com` | `1234` |
-| **Student** | `ibo.com` | `123` |
+| **Teacher** | `mehmet@gmail.com` | `1234` |
+| **Student** | `ibo@gmail.com` | `1234` |
 
 ---
 

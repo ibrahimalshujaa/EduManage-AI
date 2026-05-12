@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Account Settings{% endblock %}
+{% block active_page %}settings{% endblock %}
+{% block page_title %}Profile Management{% endblock %}
+{% block page_subtitle %}Manage your institutional profile and personal information{% endblock %}
+
+{% block content %}
+<div class="stats-grid" style="grid-template-columns: 1fr 2fr;">
+    <!-- Profile Card -->
+    <div class="card" style="text-align: center; padding: 40px 20px;">
+        <div style="position: relative; display: inline-block; margin-bottom: 20px;">
+            <div style="width: 120px; height: 120px; border-radius: 60px; background: var(--bg-dark); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; overflow: hidden; margin: 0 auto;">
+                <img id="profilePreview" src="{{ user.profile_image or '/static/images/default-avatar.png' }}" 
+                     style="width: 100%; height: 100%; object-fit: cover; {% if not user.profile_image %}display: none;{% endif %}">
+                {% if not user.profile_image %}
+                <i id="defaultAvatarIcon" class="fas fa-user" style="font-size: 50px; color: var(--border);"></i>
+                {% endif %}
+            </div>
+            <label for="imageUpload" style="position: absolute; bottom: 5px; right: 5px; width: 32px; height: 32px; border-radius: 16px; background: var(--accent); color: var(--bg-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <i class="fas fa-camera" style="font-size: 14px;"></i>
+            </label>
+            <input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="previewImage(event)">
+        </div>
+        <h3 style="font-weight: 700; color: white;">{{ user.full_name }}</h3>
+        <p style="color: var(--text-secondary); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px;">{{ session.role }}</p>
+        
+        <div style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 25px; text-align: left;">
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">Institutional ID</label>
+                <div style="font-weight: 600; color: var(--accent);">{{ user.student_number or user.teacher_number or 'N/A' }}</div>
+            </div>
+            <div>
+                <label style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">Institutional Email</label>
+                <div style="font-weight: 600;">{{ user.email }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="card">
+        <h3 style="font-weight: 700; margin-bottom: 25px; display: flex; align-items: center;">
+            <i class="fas fa-edit" style="margin-right: 12px; color: var(--accent);"></i> PERSONAL INFORMATION
+        </h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="grid-column: span 2;">
+                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">FULL NAME</label>
+                <input type="text" value="{{ user.full_name }}" readonly style="width: 100%; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border); color: var(--text-secondary); padding: 12px; border-radius: 8px; outline: none; cursor: not-allowed;">
+            </div>
+            
+            <div style="grid-column: span 1;">
+                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">{{ _('email') }}</label>
+                <input type="email" id="profEmail" value="{{ user.email }}" placeholder="example@mail.com" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+            </div>
+
+            <div style="grid-column: span 1;">
+                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">{{ _('phone') }}</label>
+                <input type="text" id="profPhone" value="{{ user.phone_number or '' }}" placeholder="+1 (555) 000-0000" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+            </div>
+            
+            {% if session.role == 'student' %}
+            <div style="grid-column: span 1;">
+                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">{{ _('parent_phone') }}</label>
+                <input type="text" id="profParentPhone" value="{{ user.parent_phone or '' }}" placeholder="+1 (555) 000-0000" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+            </div>
+            {% elif session.role == 'teacher' %}
+            <div style="grid-column: span 1;">
+                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">DEPARTMENT</label>
+                <input type="text" value="{{ user.department or 'N/A' }}" readonly style="width: 100%; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border); color: var(--text-secondary); padding: 12px; border-radius: 8px; outline: none; cursor: not-allowed;">
+            </div>
+            {% endif %}
+            
+            <div style="grid-column: span 2;">
+                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">HOME ADDRESS</label>
+                <textarea id="profAddress" placeholder="Enter your full address..." style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none; height: 100px; resize: none;">{{ user.address or '' }}</textarea>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px;">
+            <button class="btn-secondary" style="padding: 12px 30px;" onclick="location.reload()">CANCEL</button>
+            <button id="saveProfileBtn" class="btn-primary" style="padding: 12px 40px; font-weight: 700;">SAVE CHANGES</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function previewImage(event) {
+        const reader = new FileReader();
+        reader.onload = function() {
+            const output = document.getElementById('profilePreview');
+            const icon = document.getElementById('defaultAvatarIcon');
+            output.src = reader.result;
+            output.style.display = 'block';
+            if (icon) icon.style.display = 'none';
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+
+    document.getElementById('saveProfileBtn').onclick = async () => {
+        const formData = new FormData();
+        formData.append('email', document.getElementById('profEmail').value);
+        formData.append('phone_number', document.getElementById('profPhone').value);
+        formData.append('address', document.getElementById('profAddress').value);
+        
+        const parentPhone = document.getElementById('profParentPhone');
+        if (parentPhone) formData.append('parent_phone', parentPhone.value);
+        
+        const imageFile = document.getElementById('imageUpload').files[0];
+        if (imageFile) formData.append('profile_image', imageFile);
+
+        try {
+            const response = await fetch('/api/profile/update', {
+                method: 'POST',
+                body: formData // Using FormData for image support
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert("Profile updated successfully!");
+                location.reload();
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (e) {
+            alert("Failed to save changes.");
+        }
+    };
+</script>
+{% endblock %}

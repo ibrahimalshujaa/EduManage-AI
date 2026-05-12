@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Reports{% endblock %}
+{% block active_page %}reports{% endblock %}
+{% block page_title %}Academic Reporting{% endblock %}
+{% block page_subtitle %}Generate and export performance reports for your assigned students and classes{% endblock %}
+
+{% block content %}
+<div class="stats-grid" style="grid-template-columns: 1.5fr 1fr;">
+    <div class="card">
+        <h3 style="font-weight: 700; margin-bottom: 25px;">EXPORT CENTER</h3>
+        <div style="display: grid; gap: 20px;">
+            <!-- New Individual Student Selection -->
+            <div style="background: var(--bg-dark); padding: 25px; border-radius: 12px; border: 1px solid var(--accent); margin-bottom: 10px;">
+                <label style="display: block; font-size: 11px; color: var(--accent); margin-bottom: 10px; font-weight: 700;">INDIVIDUAL STUDENT REPORT</label>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <select id="studentSelect" style="flex: 1; min-width: 200px; background: #0f172a; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+                        <option value="">-- Select Student --</option>
+                        {% for s in students %}
+                        <option value="{{ s.id }}">{{ s.full_name }} ({{ s.class_name }})</option>
+                        {% endfor %}
+                    </select>
+                    <button id="generateStudentPdf" class="btn-primary" style="padding: 12px 25px;">
+                        <i class="fas fa-file-pdf" style="margin-right: 8px;"></i> GENERATE PDF
+                    </button>
+                </div>
+            </div>
+
+            <div style="background: var(--bg-dark); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4 style="font-weight: 700; margin-bottom: 4px;">Class Performance PDF</h4>
+                    <p style="font-size: 12px; color: var(--text-secondary);">Comprehensive overview of all students in your assigned class.</p>
+                </div>
+                <button class="btn-primary" style="font-size: 11px;">DOWNLOAD</button>
+            </div>
+            
+            <div style="background: var(--bg-dark); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4 style="font-weight: 700; margin-bottom: 4px;">Individual Risk Reports</h4>
+                    <p style="font-size: 12px; color: var(--text-secondary);">AI-driven risk assessment reports for all at-risk students.</p>
+                </div>
+                <button class="btn-primary" style="font-size: 11px;">GENERATE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dynamic Preview Card -->
+    <div id="reportPreview" class="card" style="background: linear-gradient(135deg, #0F172A, #1E293B); opacity: 0.5; pointer-events: none;">
+        <h3 style="font-weight: 700; margin-bottom: 20px; color: var(--accent);">STUDENT PREVIEW</h3>
+        <div id="previewContent">
+            <p style="text-align: center; color: var(--text-secondary); padding: 40px 0;">Select a student to view live performance analysis.</p>
+        </div>
+    </div>
+</div>
+
+<div class="table-container" style="margin-top: 30px;">
+    <h3 style="font-weight: 700; margin-bottom: 20px;">RECENT EXPORTS</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>REPORT TYPE</th>
+                <th>DATE</th>
+                <th>SCOPE</th>
+                <th>FORMAT</th>
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody id="recentExports">
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 20px; color: var(--text-secondary);">No recent exports found.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const studentSelect = document.getElementById('studentSelect');
+    const previewCard = document.getElementById('reportPreview');
+    const previewContent = document.getElementById('previewContent');
+    const generateBtn = document.getElementById('generateStudentPdf');
+
+    studentSelect.onchange = async () => {
+        const sid = studentSelect.value;
+        if (!sid) {
+            previewCard.style.opacity = '0.5';
+            previewContent.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 40px 0;">Select a student to view live performance analysis.</p>';
+            return;
+        }
+
+        previewCard.style.opacity = '1';
+        previewContent.innerHTML = '<div class="loader" style="margin: 20px auto;"></div>';
+
+        try {
+            const response = await fetch(`/api/student-report-data/${sid}`);
+            const data = await response.json();
+            
+            if (data.error) throw new Error(data.error);
+
+            const s = data.student;
+            const p = data.prediction;
+            const grades = data.grades || [];
+            
+            // Calculate a simple average if not provided
+            const avgG = grades.length > 0 ? (grades.reduce((acc, curr) => acc + curr.grade, 0) / grades.length).toFixed(1) : 'N/A';
+
+            previewContent.innerHTML = `
+                <div style="animation: fadeIn 0.5s ease-out;">
+                    <!-- Student Header -->
+                    <div style="display: flex; align-items: center; margin-bottom: 25px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="width: 50px; height: 50px; background: var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #020617; margin-right: 15px; box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div>
+                            <h4 style="color: white; font-size: 18px; margin-bottom: 2px; font-weight: 800;">${s.full_name}</h4>
+                            <p style="color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Academic Reference: ${s.student_number || 'N/A'}</p>
+                        </div>
+                    </div>
+
+                    <!-- AI Success Gauge -->
+                    <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 20px; padding: 25px; text-align: center; margin-bottom: 25px; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%);"></div>
+                        <span style="display: block; font-size: 11px; color: var(--accent); margin-bottom: 15px; font-weight: 700; text-transform: uppercase;">AI Success Forecast</span>
+                        
+                        <div style="position: relative; width: 120px; height: 120px; margin: 0 auto 15px;">
+                            <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
+                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="${p ? p.success_probability : 0}, 100" style="transition: stroke-dasharray 1s ease-in-out;" />
+                            </svg>
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: 800; color: white;">
+                                ${p ? p.success_probability.toFixed(0) : '0'}%
+                            </div>
+                        </div>
+
+                        <div class="badge ${p && p.risk_level === 'High Risk' ? 'badge-high' : (p && p.risk_level === 'Medium Risk' ? 'badge-medium' : 'badge-low')}" style="padding: 6px 15px; font-size: 12px; border-radius: 20px;">
+                            ${p ? p.risk_level : 'Awaiting Analysis'}
+                        </div>
+                    </div>
+
+                    <!-- Performance Stats Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+                        <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 10px; color: var(--text-secondary); font-weight: 700;">ABSENCES</span>
+                                <i class="fas fa-calendar-times" style="color: var(--danger); font-size: 12px;"></i>
+                            </div>
+                            <span style="font-size: 18px; font-weight: 800; color: white;">${s.absences}</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 10px; color: var(--text-secondary); font-weight: 700;">STUDY HOURS</span>
+                                <i class="fas fa-clock" style="color: var(--success); font-size: 12px;"></i>
+                            </div>
+                            <span style="font-size: 18px; font-weight: 800; color: white;">${s.study_hours}h</span>
+                        </div>
+                    </div>
+
+                    <!-- Grade Breakdown Accordion-style -->
+                    <div style="background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span style="font-size: 11px; font-weight: 700; color: white;">ACADEMIC PERFORMANCE</span>
+                            <span style="font-size: 10px; color: var(--accent); background: rgba(56,189,248,0.1); padding: 2px 8px; border-radius: 4px;">AVG: ${avgG}%</span>
+                        </div>
+                        <div style="display: grid; gap: 12px;">
+                            ${grades.map(g => `
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px;">
+                                        <span style="color: var(--text-secondary);">${g.class_name}</span>
+                                        <span style="color: white; font-weight: 700;">${g.grade}%</span>
+                                    </div>
+                                    <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+                                        <div style="height: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8); width: ${g.grade}%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        } catch (e) {
+            previewContent.innerHTML = `<p style="color: #ef4444; text-align: center;">Error loading preview: ${e.message}</p>`;
+        }
+    };
+
+    generateBtn.onclick = async () => {
+        const sid = studentSelect.value;
+        if (!sid) { alert("Please select a student first."); return; }
+
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERATING...';
+
+        try {
+            const response = await fetch('/admin/reports/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'student', id: sid })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                // Add to recent exports table
+                const tbody = document.getElementById('recentExports');
+                if (tbody.innerHTML.includes('No recent exports')) tbody.innerHTML = '';
+                
+                const row = `
+                    <tr>
+                        <td style="font-weight: 600;">Student Performance: ${studentSelect.options[studentSelect.selectedIndex].text}</td>
+                        <td>${new Date().toISOString().split('T')[0]}</td>
+                        <td>Individual</td>
+                        <td><span style="color: var(--accent);">PDF</span></td>
+                        <td><a href="/admin/reports/download/${data.filename}" style="color: var(--accent);"><i class="fas fa-download"></i> Download</a></td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('afterbegin', row);
+                alert("Report generated successfully!");
+            } else {
+                alert("Generation failed: " + data.error);
+            }
+        } catch (e) {
+            alert("An error occurred.");
+        } finally {
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-file-pdf" style="margin-right: 8px;"></i> GENERATE PDF';
+        }
+    };
+</script>
+{% endblock %}

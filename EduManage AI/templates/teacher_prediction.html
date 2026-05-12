@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}AI Student Prediction{% endblock %}
+{% block active_page %}prediction{% endblock %}
+{% block page_title %}AI Academic Forecasting{% endblock %}
+{% block page_subtitle %}Predict student success probability and performance factors{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 25px; padding: 25px;">
+    <div style="display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px;">
+            <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 700;">SELECT STUDENT</label>
+            <select id="studentSelect" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none; font-size: 14px;">
+                <option value="">-- Choose a student --</option>
+                {% for s in enrollments %}
+                <option value="{{ s.student_id }}" data-class="{{ s.class_id }}">
+                    {{ s.full_name }} ({{ s.class_name }} - {{ s.subject }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button id="runPredictBtn" class="btn-primary" style="padding: 12px 40px; font-weight: 700; height: 46px;">
+            <i class="fas fa-brain" style="margin-right: 8px;"></i> RUN PREDICTION
+        </button>
+    </div>
+</div>
+
+<div id="resultPlaceholder" class="card" style="text-align: center; padding: 60px 20px; border-style: dashed; background: transparent; color: var(--text-secondary);">
+    <i class="fas fa-chart-line" style="font-size: 40px; margin-bottom: 20px; opacity: 0.5;"></i>
+    <p>Please select a student and click <strong>Run Prediction</strong> to generate academic insights.</p>
+</div>
+
+<div id="predictionResult" style="display: none;">
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div style="display: grid; grid-template-columns: 1fr 1.5fr 1.5fr; gap: 0; min-height: 400px;">
+            <!-- Left Side: Circular Gauge -->
+            <div style="background: rgba(15, 23, 42, 0.5); padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid var(--border);">
+                <div style="position: relative; width: 220px; height: 110px; margin-bottom: 20px;">
+                    <canvas id="gaugeChart"></canvas>
+                    <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); text-align: center; width: 100%;">
+                        <div id="probPercent" style="font-size: 32px; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 4px;">0%</div>
+                        <div style="font-size: 9px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.7;">SUCCESS PROB.</div>
+                    </div>
+                </div>
+                <div style="margin-top: 40px; text-align: center;">
+                    <div style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">CONFIDENCE SCORE</div>
+                    <div id="confidenceVal" style="font-weight: 700; color: var(--success); font-size: 16px;">0%</div>
+                </div>
+            </div>
+
+            <!-- Middle: Student Info -->
+            <div style="padding: 40px; border-right: 1px solid var(--border);">
+                <h3 id="resName" style="font-size: 24px; font-weight: 700; margin-bottom: 10px;">-</h3>
+                <p id="resClass" style="color: var(--accent); font-weight: 600; margin-bottom: 30px; font-size: 14px;">-</p>
+                
+                <div style="margin-bottom: 25px;">
+                    <label style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 8px;">Predicted Final Score</label>
+                    <div id="resScore" style="font-size: 32px; font-weight: 800;">0.0 / 100</div>
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <label style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 8px;">Institutional Risk Level</label>
+                    <span id="resRisk" class="badge badge-low" style="font-size: 14px; padding: 8px 16px;">-</span>
+                </div>
+
+                <div style="padding: 15px; background: var(--bg-dark); border-radius: 12px; border-left: 4px solid var(--accent);">
+                    <label style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 5px;">AI Recommendation</label>
+                    <p id="resRec" style="font-size: 13px; line-height: 1.5; color: var(--text-primary);">Calculated insights will appear here...</p>
+                </div>
+            </div>
+
+            <!-- Right Side: Factor Chart -->
+            <div style="padding: 40px;">
+                <h4 style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 25px;">Prediction Factors</h4>
+                <div style="height: 300px;">
+                    <canvas id="factorChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let gaugeChart = null;
+    let factorChart = null;
+
+    document.getElementById('runPredictBtn').onclick = async () => {
+        const select = document.getElementById('studentSelect');
+        const sid = select.value;
+        const cid = select.options[select.selectedIndex].getAttribute('data-class');
+
+        if (!sid) {
+            alert("Please select a student first.");
+            return;
+        }
+
+        // UI Transition
+        document.getElementById('resultPlaceholder').style.display = 'none';
+        document.getElementById('predictionResult').style.display = 'block';
+
+        try {
+            const response = await fetch('/api/teacher/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ student_id: sid, class_id: cid })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                updateUI(data.prediction, data.factors);
+            } else {
+                alert("Error: " + data.error);
+                document.getElementById('resultPlaceholder').style.display = 'block';
+                document.getElementById('predictionResult').style.display = 'none';
+            }
+        } catch (e) {
+            alert("Failed to connect to AI server.");
+        }
+    };
+
+    function updateUI(pred, factors) {
+        document.getElementById('probPercent').innerText = pred.probability + '%';
+        document.getElementById('confidenceVal').innerText = pred.confidence + '%';
+        document.getElementById('resName').innerText = pred.full_name;
+        document.getElementById('resClass').innerText = pred.class_name;
+        document.getElementById('resScore').innerText = pred.score + ' / 100';
+        
+        const riskBadge = document.getElementById('resRisk');
+        riskBadge.innerText = pred.risk;
+        riskBadge.className = 'badge ' + (pred.risk === 'High Risk' ? 'badge-high' : pred.risk === 'Medium Risk' ? 'badge-medium' : 'badge-low');
+        
+        document.getElementById('resRec').innerText = pred.recommendation;
+
+        // Update Charts
+        initGauge(pred.probability);
+        initFactors(factors);
+    }
+
+    function initGauge(val) {
+        if (gaugeChart) gaugeChart.destroy();
+        const ctx = document.getElementById('gaugeChart').getContext('2d');
+        gaugeChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [val, 100 - val],
+                    backgroundColor: ['#38bdf8', '#1e293b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                cutout: '92%', // Thinner arc
+                rotation: -90,
+                circumference: 180,
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false }, 
+                    tooltip: { enabled: false } 
+                }
+            }
+        });
+    }
+
+    function initFactors(factors) {
+        if (factorChart) factorChart.destroy();
+        const ctx = document.getElementById('factorChart').getContext('2d');
+        
+        // Modern Color Palette
+        const colors = [
+            '#0ea5e9', // Study Hours: Cyan
+            '#ef4444', // Absences: Red
+            '#a855f7', // Family Support: Purple
+            '#f59e0b', // Midterm: Amber
+            '#38bdf8', // Final: Light Blue
+            '#38bdf8', // Homework: Light Blue
+            '#10b981'  // Previous Score: Emerald
+        ];
+
+        factorChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Study Hours', 'Absences', 'Family Support', 'Midterm Grade', 'Final Grade', 'Homework', 'Previous Score'],
+                datasets: [{
+                    data: [
+                        factors.study_hours, 
+                        factors.absences, 
+                        factors.family_support, 
+                        factors.midterm, 
+                        factors.final, 
+                        factors.homework, 
+                        factors.previous_score
+                    ],
+                    backgroundColor: colors,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    barThickness: 12
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 2000,
+                    easing: 'easeOutQuart'
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleColor: '#38bdf8',
+                        bodyColor: '#f8fafc',
+                        borderColor: '#1e293b',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: {
+                            label: (context) => ` Impact: ${context.parsed.x.toFixed(1)}%`
+                        }
+                    }
+                },
+                scales: {
+                    x: { 
+                        display: true, 
+                        max: 100,
+                        grid: { color: 'rgba(30, 41, 59, 0.3)', drawBorder: false },
+                        ticks: { color: '#64748b', font: { size: 10 } }
+                    },
+                    y: { 
+                        grid: { display: false }, 
+                        ticks: { 
+                            color: '#94a3b8',
+                            font: { size: 11, weight: '500' }
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

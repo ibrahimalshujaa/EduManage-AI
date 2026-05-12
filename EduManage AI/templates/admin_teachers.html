@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Teachers{% endblock %}
+{% block active_page %}teachers{% endblock %}
+{% block page_title %}Faculty Management{% endblock %}
+{% block page_subtitle %}Create and manage real institutional teacher accounts{% endblock %}
+
+{% block content %}
+<div class="stats-grid" style="grid-template-columns: 1fr 2fr;">
+    <!-- Add Teacher Form -->
+    <div class="card">
+        <h3 style="font-weight: 700; margin-bottom: 25px; color: var(--accent);">ADD TEACHER</h3>
+        <div style="display: grid; gap: 15px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">FULL NAME</label>
+                    <input type="text" id="teacherName" placeholder="John Smith" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">TEACHER ID</label>
+                    <input type="text" id="teacherID" placeholder="T-2024-501" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+                </div>
+            </div>
+            <div>
+                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">EMAIL (LOGIN)</label>
+                <input type="email" id="teacherEmail" placeholder="john@school.com" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">PASSWORD</label>
+                <input type="password" id="teacherPass" placeholder="******" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">SUBJECT</label>
+                    <input type="text" id="teacherSubject" placeholder="Mathematics" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">DEPARTMENT</label>
+                    <input type="text" id="teacherDept" placeholder="Engineering" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+                </div>
+            </div>
+            <button id="saveTeacherBtn" class="btn-primary" style="margin-top: 10px; padding: 14px;">CREATE TEACHER ACCOUNT</button>
+        </div>
+    </div>
+
+    <!-- Teachers List -->
+    <div class="table-container" style="margin-top: 0; overflow-x: auto;">
+        <h3 style="font-weight: 700; margin-bottom: 20px;">REGISTERED FACULTY</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>NAME / ID</th>
+                    <th>EMAIL</th>
+                    <th>SUBJECT / DEPT</th>
+                    <th>PHONE</th>
+                    <th>STATUS</th>
+                    <th>ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for teacher in teachers %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 700;">{{ teacher.full_name }}</div>
+                        <div style="font-size: 10px; color: var(--accent);">{{ teacher.teacher_number or 'NO ID' }}</div>
+                    </td>
+                    <td>{{ teacher.email }}</td>
+                    <td>
+                        <div style="font-weight: 600;">{{ teacher.subject }}</div>
+                        <div style="font-size: 10px; color: var(--text-secondary);">{{ teacher.department or 'General' }}</div>
+                    </td>
+                    <td>{{ teacher.phone_number or '-' }}</td>
+                    <td><span class="badge badge-low">Active</span></td>
+                    <td>
+                        <button style="background: transparent; border: none; color: var(--danger); cursor: pointer;"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('saveTeacherBtn').onclick = async () => {
+        const payload = {
+            full_name: document.getElementById('teacherName').value,
+            teacher_number: document.getElementById('teacherID').value,
+            email: document.getElementById('teacherEmail').value,
+            password: document.getElementById('teacherPass').value,
+            subject: document.getElementById('teacherSubject').value,
+            department: document.getElementById('teacherDept').value,
+            role: 'teacher'
+        };
+
+        try {
+            const response = await fetch('/admin/users/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (data.success) location.reload();
+            else alert("Error: " + data.error);
+        } catch (e) { alert("Failed."); }
+    };
+</script>
+{% endblock %}

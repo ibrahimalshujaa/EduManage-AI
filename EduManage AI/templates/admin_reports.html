@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Institutional Reports{% endblock %}
+{% block active_page %}reports{% endblock %}
+{% block page_title %}Administrative Analytics{% endblock %}
+{% block page_subtitle %}Real-time institutional performance and risk distribution data{% endblock %}
+
+{% block content %}
+<!-- Top Selection Section -->
+<div class="card" style="margin-bottom: 25px; padding: 25px;">
+    <div style="display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 200px;">
+            <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 700;">REPORT TYPE</label>
+            <select id="reportType" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;" onchange="toggleSelectors()">
+                <option value="full">Full School Report</option>
+                <option value="class">Class Performance Report</option>
+                <option value="student">Individual Student Report</option>
+            </select>
+        </div>
+        
+        <div id="classSelector" style="flex: 1; min-width: 200px; display: none;">
+            <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 700;">SELECT CLASS</label>
+            <select id="selectedClass" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+                {% for c in classes %}
+                <option value="{{ c.id }}">{{ c.class_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div id="studentSelector" style="flex: 1; min-width: 200px; display: none;">
+            <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 700;">SELECT STUDENT</label>
+            <select id="selectedStudent" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+                {% for s in students %}
+                <option value="{{ s.id }}">{{ s.full_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button onclick="generateReport()" class="btn-primary" style="padding: 12px 25px;"><i class="fas fa-file-pdf" style="margin-right: 8px;"></i> DOWNLOAD PDF</button>
+        </div>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="card">
+        <div class="card-title">TOTAL REGISTERED STUDENTS</div>
+        <div class="card-value">{{ stats.students }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Real-time database count</div>
+    </div>
+    <div class="card">
+        <div class="card-title">OVERALL SUCCESS PROBABILITY</div>
+        <div class="card-value" style="color: var(--accent);">{{ "%.1f"|format(stats.success or 0) }}%</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Aggregated AI predictions</div>
+    </div>
+    <div class="card">
+        <div class="card-title">ACTIVE INSTITUTIONAL CLASSES</div>
+        <div class="card-value">{{ stats.classes }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 10px;">Managed faculty groups</div>
+    </div>
+</div>
+
+<div class="stats-grid" style="grid-template-columns: 2fr 1fr; margin-top: 30px;">
+    <!-- Real Risk Distribution -->
+    <div class="card">
+        <h3 style="font-weight: 700; margin-bottom: 20px;">INSTITUTIONAL RISK DISTRIBUTION</h3>
+        <div style="height: 300px; display: flex; align-items: flex-end; gap: 40px; padding: 20px 40px;">
+            {% set risk_counts = [risks['Low Risk'], risks['Medium Risk'], risks['High Risk']] %}
+            {% set max_risk = risk_counts | max %}
+            <div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; min-width: 60px;">
+                <div style="width: 100%; background: var(--success); height: {{ (risks['Low Risk'] / max_risk * 100) if max_risk > 0 else 0 }}%; border-radius: 8px 8px 0 0; opacity: 0.8; position: relative;">
+                    <div style="position: absolute; top: -25px; width: 100%; text-align: center; color: white; font-weight: 700;">{{ risks['Low Risk'] }}</div>
+                </div>
+                <div style="margin-top: 15px; font-size: 11px; color: var(--text-secondary); white-space: nowrap;">LOW RISK</div>
+            </div>
+            <div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; min-width: 60px;">
+                <div style="width: 100%; background: var(--warning); height: {{ (risks['Medium Risk'] / max_risk * 100) if max_risk > 0 else 0 }}%; border-radius: 8px 8px 0 0; opacity: 0.8; position: relative;">
+                    <div style="position: absolute; top: -25px; width: 100%; text-align: center; color: white; font-weight: 700;">{{ risks['Medium Risk'] }}</div>
+                </div>
+                <div style="margin-top: 15px; font-size: 11px; color: var(--text-secondary); white-space: nowrap;">MEDIUM RISK</div>
+            </div>
+            <div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; min-width: 60px;">
+                <div style="width: 100%; background: var(--danger); height: {{ (risks['High Risk'] / max_risk * 100) if max_risk > 0 else 0 }}%; border-radius: 8px 8px 0 0; opacity: 0.8; position: relative;">
+                    <div style="position: absolute; top: -25px; width: 100%; text-align: center; color: white; font-weight: 700;">{{ risks['High Risk'] }}</div>
+                </div>
+                <div style="margin-top: 15px; font-size: 11px; color: var(--text-secondary); white-space: nowrap;">HIGH RISK</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Insights -->
+    <div class="card" style="display: flex; flex-direction: column; justify-content: center; background: rgba(15, 23, 42, 0.3);">
+        <h3 style="font-weight: 700; margin-bottom: 20px; color: var(--accent);">QUICK INSIGHTS</h3>
+        <div style="display: grid; gap: 15px;">
+            <div style="padding: 15px; background: var(--bg-dark); border-radius: 10px; border-left: 4px solid var(--danger);">
+                <div style="font-size: 10px; color: var(--text-secondary);">AT-RISK STUDENTS</div>
+                <div style="font-size: 20px; font-weight: 800;">{{ risks['High Risk'] }}</div>
+            </div>
+            <div style="padding: 15px; background: var(--bg-dark); border-radius: 10px; border-left: 4px solid var(--success);">
+                <div style="font-size: 10px; color: var(--text-secondary);">{{ _('faculty_members') }}</div>
+                <div style="font-size: 20px; font-weight: 800;">{{ stats.teachers }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Class Performance Table -->
+<div class="table-container" style="margin-top: 30px;">
+    <h3 style="font-weight: 700; margin-bottom: 20px;">{{ _('performance_summary') }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>{{ _('class_name') }}</th>
+                <th>{{ _('instructor') }}</th>
+                <th>{{ _('students') }}</th>
+                <th>AVG GRADE</th>
+                <th>SUCCESS PROB.</th>
+                <th>{{ _('status') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in class_perf %}
+            <tr>
+                <td style="font-weight: 700;">{{ c.class_name }}</td>
+                <td>{{ c.teacher_name or 'Unassigned' }}</td>
+                <td>{{ c.student_count }}</td>
+                <td style="color: var(--accent);">{{ "%.1f"|format(c.avg_grade or 0) }}%</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="flex: 1; height: 6px; background: var(--bg-dark); border-radius: 3px; min-width: 60px;">
+                            <div style="height: 100%; background: var(--accent); width: {{ c.avg_success or 0 }}%; border-radius: 3px;"></div>
+                        </div>
+                        <span>{{ "%.0f"|format(c.avg_success or 0) }}%</span>
+                    </div>
+                </td>
+                <td>
+                    {% if (c.avg_success or 0) > 80 %}
+                        <span class="badge badge-low">Excellent</span>
+                    {% elif (c.avg_success or 0) > 60 %}
+                        <span class="badge badge-medium">Steady</span>
+                    {% else %}
+                        <span class="badge badge-high">At Risk</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Student Detail Table -->
+<div class="table-container" style="margin-top: 30px;">
+    <h3 style="font-weight: 700; margin-bottom: 20px;">STUDENT PERFORMANCE METRICS</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>STUDENT</th>
+                <th>CLASS</th>
+                <th>ABSENCES</th>
+                <th>AVG GRADE</th>
+                <th>PREDICTION</th>
+                <th>RISK LEVEL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in student_perf %}
+            <tr>
+                <td style="font-weight: 600;">{{ s.full_name }}</td>
+                <td style="font-size: 12px; color: var(--text-secondary);">{{ s.class_name }}</td>
+                <td style="text-align: center;">{{ s.absences }}</td>
+                <td style="font-weight: 700; color: var(--accent);">{{ "%.1f"|format(s.avg_grade or 0) }}%</td>
+                <td style="font-weight: 700;">{{ "%.1f"|format(s.success_probability or 0) }}%</td>
+                <td>
+                    {% if s.risk_level == 'High Risk' %}
+                        <span class="badge badge-high">High Risk</span>
+                    {% elif s.risk_level == 'Medium Risk' %}
+                        <span class="badge badge-medium">Medium</span>
+                    {% else %}
+                        <span class="badge badge-low">Low Risk</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleSelectors() {
+        const type = document.getElementById('reportType').value;
+        document.getElementById('classSelector').style.display = type === 'class' ? 'block' : 'none';
+        document.getElementById('studentSelector').style.display = type === 'student' ? 'block' : 'none';
+    }
+
+    async function generateReport() {
+        const type = document.getElementById('reportType').value;
+        let targetId = null;
+        if (type === 'class') targetId = document.getElementById('selectedClass').value;
+        if (type === 'student') targetId = document.getElementById('selectedStudent').value;
+
+        try {
+            const response = await fetch('/admin/reports/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: type, id: targetId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                window.open(`/admin/reports/download/${data.filename}`, '_blank');
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (e) {
+            alert("Failed to generate report.");
+        }
+    }
+</script>
+{% endblock %}

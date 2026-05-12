@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Management{% endblock %}
+{% block active_page %}teachers{% endblock %}
+{% block page_title %}Teacher Directory{% endblock %}
+{% block page_subtitle %}Manage faculty members and their assigned academic responsibilities{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div style="background: var(--card-bg); padding: 10px 20px; border-radius: 10px; border: 1px solid var(--border); display: flex; align-items: center; width: 350px;">
+        <i class="fas fa-search" style="color: var(--text-secondary); margin-right: 12px;"></i>
+        <input type="text" placeholder="Search by Name or Subject..." style="background: transparent; border: none; color: white; outline: none; width: 100%;">
+    </div>
+    <button class="btn-primary">+ Register New Teacher</button>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>FULL NAME</th>
+                <th>EMAIL</th>
+                <th>SUBJECT</th>
+                <th>ASSIGNED CLASS</th>
+                <th>STATUS</th>
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for teacher in teachers %}
+            <tr>
+                <td>#{{ teacher.id }}</td>
+                <td style="font-weight: 600;">{{ teacher.full_name }}</td>
+                <td>{{ teacher.email }}</td>
+                <td><span style="color: var(--accent);">{{ teacher.subject }}</span></td>
+                <td>{{ teacher.assigned_class }}</td>
+                <td><span class="badge badge-low">ACTIVE</span></td>
+                <td>
+                    <button style="background: transparent; border: none; color: var(--accent); cursor: pointer; margin-right: 10px;"><i class="fas fa-edit"></i></button>
+                    <button style="background: transparent; border: none; color: var(--danger); cursor: pointer;"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

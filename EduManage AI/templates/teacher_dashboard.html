@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Dashboard{% endblock %}
+{% block active_page %}dashboard{% endblock %}
+{% block page_title %}Faculty Intelligence Dashboard{% endblock %}
+{% block page_subtitle %}Classroom performance metrics and AI-driven pedagogical insights{% endblock %}
+
+{% block content %}
+<!-- Top Cards -->
+<div class="stats-grid">
+    <div class="card">
+        <div class="card-title">ASSIGNED STUDENTS</div>
+        <div class="card-value">{{ stats.students }} <i class="fas fa-users" style="font-size: 16px; margin-left: 10px; color: var(--accent);"></i></div>
+    </div>
+    <div class="card">
+        <div class="card-title">CLASS AVG GRADE</div>
+        <div class="card-value">{{ stats.avg_grade }}% <span class="card-trend trend-up">+3.2%</span></div>
+    </div>
+    <div class="card">
+        <div class="card-title">AT RISK STUDENTS</div>
+        <div class="card-value" style="color: var(--danger);">{{ stats.at_risk }} <span class="card-trend trend-down">-2</span></div>
+    </div>
+    <div class="card">
+        <div class="card-title">SUCCESS RATE</div>
+        <div class="card-value" style="color: var(--success);">{{ stats.success }}% <span class="card-trend trend-up">+5.1%</span></div>
+    </div>
+</div>
+
+<!-- Row 1: Charts -->
+<div class="charts-grid" style="grid-template-columns: 2fr 1fr; margin-bottom: 30px;">
+    <div class="card">
+        <div style="font-weight: 700; margin-bottom: 20px;">PREDICTION CHANGE TREND</div>
+        <canvas id="teacherTrendChart" height="150"></canvas>
+    </div>
+    <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="font-weight: 700; margin-bottom: 20px; align-self: flex-start;">RISK DISTRIBUTION</div>
+        <div style="height: 180px; width: 100%;"><canvas id="teacherRiskDonut"></canvas></div>
+    </div>
+</div>
+
+<!-- Row 2: Analysis & Activity -->
+<div class="charts-grid" style="grid-template-columns: 2fr 1fr; margin-bottom: 30px;">
+    <!-- Student Risk Table -->
+    <div class="table-container" style="margin-top: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-weight: 700;">STUDENT RISK ANALYSIS</h3>
+            <a href="/teacher/students" style="font-size: 11px; color: var(--accent); text-decoration: none;">View All</a>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>STUDENT</th>
+                    <th>GPA</th>
+                    <th>PROB.</th>
+                    <th>RISK</th>
+                    <th>ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in risk_students %}
+                <tr>
+                    <td style="font-weight: 600;">{{ student.full_name }}</td>
+                    <td>{{ student.avg }}%</td>
+                    <td style="color: var(--accent);">{{ student.prob }}%</td>
+                    <td><span class="badge {% if student.risk == 'High Risk' %}badge-high{% elif student.risk == 'Medium Risk' %}badge-medium{% else %}badge-low{% endif %}">{{ student.risk }}</span></td>
+                    <td>
+                        <a href="/teacher/simulator?sid={{ student.id }}" style="color: var(--accent);"><i class="fas fa-flask"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Recent Grade Updates -->
+    <div class="card">
+        <h3 style="font-weight: 700; margin-bottom: 20px;">RECENT UPDATES</h3>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            {% for grade in recent_grades %}
+            <div style="background: rgba(2, 6, 23, 0.4); padding: 12px; border-radius: 10px; border: 1px solid var(--border);">
+                <div style="font-size: 13px; font-weight: 700;">{{ grade.full_name }}</div>
+                <div style="font-size: 11px; color: var(--text-secondary);">{{ grade.subject_name }} grade: <span style="color: var(--accent);">{{ grade.grade }}%</span></div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Row 3: Class Summary & Recommendations -->
+<div class="charts-grid" style="grid-template-columns: 1.5fr 1fr;">
+    <!-- Class Summaries -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        {% for cls in classes %}
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <h4 style="font-weight: 800; margin-bottom: 10px;">{{ cls.name }}</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11px;">
+                <div style="color: var(--text-secondary);">Students: {{ cls.students }}</div>
+                <div style="color: var(--text-secondary);">Avg: {{ cls.avg }}%</div>
+                <div style="color: var(--danger);">Risk: {{ cls.risk }}</div>
+                <div style="color: var(--success);">Prob: {{ cls.success }}%</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- AI Recommendations -->
+    <div class="card" style="background: linear-gradient(135deg, #0F172A, #1E293B);">
+        <h3 style="font-weight: 700; margin-bottom: 20px; color: var(--accent);"><i class="fas fa-brain"></i> AI TEACHING RECS</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            {% for rec in recs %}
+            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <i class="fas fa-lightbulb" style="color: var(--accent); margin-top: 3px;"></i>
+                <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">{{ rec }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Trend Chart
+    new Chart(document.getElementById('teacherTrendChart'), {
+        type: 'line',
+        data: {
+            labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6'],
+            datasets: [{
+                label: 'Success Prob',
+                data: [65, 68, 72, 70, 75, {{ stats.success }}],
+                borderColor: '#38BDF8',
+                backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { color: '#1E293B' }, ticks: { color: '#94A3B8' } },
+                x: { grid: { display: false }, ticks: { color: '#94A3B8' } }
+            }
+        }
+    });
+
+    // Risk Donut
+    new Chart(document.getElementById('teacherRiskDonut'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Low', 'Med', 'High'],
+            datasets: [{
+                data: [{{ stats.students - stats.at_risk }}, 5, {{ stats.at_risk }}],
+                backgroundColor: ['#22C55E', '#EAB308', '#EF4444'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            plugins: { legend: { position: 'bottom', labels: { color: '#94A3B8', boxWidth: 10 } } },
+            cutout: '70%',
+            maintainAspectRatio: false
+        }
+    });
+</script>
+{% endblock %}

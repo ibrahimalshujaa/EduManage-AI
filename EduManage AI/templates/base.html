@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduManage AI | {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo-section">
+                <div class="logo-text">EduManage AI</div>
+            </div>
+            
+            <nav class="nav-menu">
+                {% if session['role'] == 'admin' %}
+                <a href="/dashboard" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-chart-line"></i> {{ _('dashboard') }}
+                </a>
+                <a href="/admin/students" class="nav-item {% if active_page == 'students' %}active{% endif %}">
+                    <i class="fas fa-user-graduate"></i> {{ _('students') }}
+                </a>
+                <a href="/admin/teachers" class="nav-item {% if active_page == 'teachers' %}active{% endif %}">
+                    <i class="fas fa-chalkboard-teacher"></i> {{ _('teachers') }}
+                </a>
+                <a href="/admin/classes" class="nav-item {% if active_page == 'classes' %}active{% endif %}">
+                    <i class="fas fa-school"></i> {{ _('classes') }}
+                </a>
+                <a href="/admin/reports" class="nav-item {% if active_page == 'reports' %}active{% endif %}">
+                    <i class="fas fa-file-invoice"></i> {{ _('reports') }}
+                </a>
+                {% endif %}
+                
+                {% if session['role'] == 'teacher' %}
+                <a href="/dashboard" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-chart-line"></i> {{ _('dashboard') }}
+                </a>
+                <a href="/teacher/classes" class="nav-item {% if active_page == 'classes' %}active{% endif %}">
+                    <i class="fas fa-school"></i> {{ _('classes') }}
+                </a>
+                <a href="/teacher/students" class="nav-item {% if active_page == 'students' %}active{% endif %}">
+                    <i class="fas fa-user-graduate"></i> {{ _('students') }}
+                </a>
+                <a href="/teacher/grades" class="nav-item {% if active_page == 'grades' %}active{% endif %}">
+                    <i class="fas fa-edit"></i> {{ _('grades') }}
+                </a>
+                <a href="/teacher/prediction" class="nav-item {% if active_page == 'prediction' %}active{% endif %}">
+                    <i class="fas fa-brain"></i> {{ _('prediction') }}
+                </a>
+                <a href="/teacher/lessons" class="nav-item {% if active_page == 'lessons' %}active{% endif %}">
+                    <i class="fas fa-book"></i> {{ _('lessons') }}
+                </a>
+                <a href="/teacher/reports" class="nav-item {% if active_page == 'reports' %}active{% endif %}">
+                    <i class="fas fa-file-invoice"></i> {{ _('reports') }}
+                </a>
+                {% endif %}
+
+                {% if session['role'] == 'student' %}
+                <a href="/dashboard" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-home"></i> {{ _('dashboard') }}
+                </a>
+                <a href="/student/grades" class="nav-item {% if active_page == 'grades' %}active{% endif %}">
+                    <i class="fas fa-medal"></i> {{ _('grades') }}
+                </a>
+                <a href="/student/lessons" class="nav-item {% if active_page == 'lessons' %}active{% endif %}">
+                    <i class="fas fa-book"></i> {{ _('lessons') }}
+                </a>
+                <a href="/student/recommendations" class="nav-item {% if active_page == 'recommendations' %}active{% endif %}">
+                    <i class="fas fa-lightbulb"></i> {{ _('recommendations') }}
+                </a>
+                {% endif %}
+                
+                <a href="/settings" class="nav-item">
+                    <i class="fas fa-cog"></i> {{ _('settings') }}
+                </a>
+            </nav>
+            
+            <div class="profile-card">
+                <div class="avatar" style="overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--border);">
+                    {% if current_user and current_user.profile_image %}
+                        <img src="{{ current_user.profile_image }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        <i class="fas fa-user" style="color: var(--text-secondary); font-size: 14px;"></i>
+                    {% endif %}
+                </div>
+                <div class="profile-info">
+                    <div style="font-size: 13px; font-weight: 700;">{{ current_user.full_name if current_user else session.get('full_name', 'User') }}</div>
+                    <div style="font-size: 11px; color: var(--text-secondary);">{{ _(session['role']) }}</div>
+                </div>
+                <a href="/logout" style="margin-left: auto; color: var(--text-secondary);"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-navbar">
+                <div class="page-title">
+                    <h1>{% block page_title %}{% endblock %}</h1>
+                    <p>{% block page_subtitle %}{% endblock %}</p>
+                </div>
+                <div class="navbar-actions">
+                    <div class="language-switcher" style="display: flex; gap: 8px; margin-right: 20px;">
+                        <a href="/set_language/en" class="nav-item" style="padding: 5px 10px; border-radius: 6px; font-size: 11px; background: {% if current_lang == 'en' %}var(--accent){% else %}transparent{% endif %}; color: white; border: 1px solid {% if current_lang == 'en' %}var(--accent){% else %}var(--border){% endif %};">EN</a>
+                        <a href="/set_language/tr" class="nav-item" style="padding: 5px 10px; border-radius: 6px; font-size: 11px; background: {% if current_lang == 'tr' %}var(--accent){% else %}transparent{% endif %}; color: white; border: 1px solid {% if current_lang == 'tr' %}var(--accent){% else %}var(--border){% endif %};">TR</a>
+                    </div>
+                    <div style="background: var(--card-bg); padding: 8px 15px; border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center;">
+                        <i class="fas fa-search" style="color: var(--text-secondary); margin-right: 10px;"></i>
+                        <input type="text" placeholder="{{ _('search') }}" style="background: transparent; border: none; color: white; outline: none; width: 200px;">
+                    </div>
+                </div>
+            </header>
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

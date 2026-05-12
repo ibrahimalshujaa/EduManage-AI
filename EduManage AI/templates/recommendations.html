@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Recommendations{% endblock %}
+{% block active_page %}recommendations{% endblock %}
+{% block page_title %}Academic Advisor{% endblock %}
+{% block page_subtitle %}Personalized AI-generated recommendations to optimize your success{% endblock %}
+
+{% block content %}
+<div style="background: rgba(56, 189, 248, 0.05); border: 1px solid var(--accent); border-radius: 16px; padding: 25px; margin-bottom: 30px; display: flex; align-items: center;">
+    <div style="background: var(--accent); color: var(--bg-dark); width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-right: 20px;">
+        <i class="fas fa-robot"></i>
+    </div>
+    <div>
+        <h3 style="font-weight: 700; color: var(--accent);">AI ADVISOR SUMMARY</h3>
+        <p style="font-size: 14px; color: var(--text-secondary);">Based on your current trajectory, we have identified {{ recs|length }} key areas for improvement. Implementing these changes could boost your success probability by up to 15%.</p>
+    </div>
+</div>
+
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+    {% for rec in recs %}
+    <div class="card" style="border-left: 4px solid {% if rec.type == 'warning' %}var(--danger){% elif rec.type == 'success' %}var(--success){% else %}var(--accent){% endif %};">
+        <div style="display: flex; align-items: flex-start; margin-bottom: 15px;">
+            <div style="font-size: 20px; margin-right: 15px; color: {% if rec.type == 'warning' %}var(--danger){% elif rec.type == 'success' %}var(--success){% else %}var(--accent){% endif %};">
+                {% if rec.type == 'warning' %}<i class="fas fa-exclamation-triangle"></i>
+                {% elif rec.type == 'success' %}<i class="fas fa-check-circle"></i>
+                {% else %}<i class="fas fa-lightbulb"></i>{% endif %}
+            </div>
+            <div>
+                <h4 style="font-weight: 700; margin-bottom: 5px;">{{ rec.title }}</h4>
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 10px;">Priority: {% if rec.type == 'warning' %}High{% else %}Standard{% endif %}</div>
+            </div>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">{{ rec.description }}</p>
+        <button class="btn-primary" style="margin-top: 20px; font-size: 11px; padding: 6px 12px; background: transparent; border: 1px solid var(--accent); color: var(--accent);">TAKE ACTION</button>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card" style="margin-top: 30px; background: linear-gradient(to right, #0F172A, #1E293B);">
+    <h3 style="font-weight: 700; margin-bottom: 20px;">GENERAL SUCCESS TIPS</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div style="display: flex; align-items: center;">
+            <i class="fas fa-clock" style="color: var(--accent); margin-right: 12px;"></i>
+            <span style="font-size: 13px;">Review notes within 24h</span>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <i class="fas fa-users" style="color: var(--accent); margin-right: 12px;"></i>
+            <span style="font-size: 13px;">Join study groups</span>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <i class="fas fa-book-reader" style="color: var(--accent); margin-right: 12px;"></i>
+            <span style="font-size: 13px;">Pre-read next chapters</span>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <i class="fas fa-coffee" style="color: var(--accent); margin-right: 12px;"></i>
+            <span style="font-size: 13px;">Take regular breaks</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

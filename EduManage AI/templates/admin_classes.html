@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('classes') }}{% endblock %}
+{% block active_page %}classes{% endblock %}
+{% block page_title %}{{ _('academic_architecture') }}{% endblock %}
+{% block page_subtitle %}{{ _('define_classes_desc') }}{% endblock %}
+
+{% block content %}
+<div class="stats-grid" style="grid-template-columns: 1fr 2fr;">
+    <!-- Add Class Form -->
+    <div class="card">
+        <h3 style="font-weight: 700; margin-bottom: 25px; color: var(--accent);">{{ _('create_class') }}</h3>
+        <div style="display: grid; gap: 15px;">
+            <div>
+                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">{{ _('class_name') }}</label>
+                <input type="text" id="className" placeholder="e.g. 10th Grade - Class A" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">{{ _('assign_teacher') }}</label>
+                <select id="classTeacher" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+                    <option value="">{{ _('no_teacher') }}</option>
+                    {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}">{{ teacher.full_name }} ({{ teacher.subject }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button id="saveClassBtn" class="btn-primary" style="margin-top: 10px; padding: 14px;">{{ _('register_new_class') }}</button>
+        </div>
+    </div>
+
+    <!-- Classes List -->
+    <div class="table-container" style="margin-top: 0;">
+        <h3 style="font-weight: 700; margin-bottom: 20px;">{{ _('institutional_classes') }}</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ _('class_name') }}</th>
+                    <th>{{ _('assigned_teacher') }}</th>
+                    <th>{{ _('subject') }}</th>
+                    <th>{{ _('actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cls in classes %}
+                <tr>
+                    <td style="font-weight: 600;">{{ cls.class_name }}</td>
+                    <td>{{ cls.teacher_name or _('unassigned') }}</td>
+                    <td>{{ cls.subject or 'N/A' }}</td>
+                    <td>
+                        <button onclick="deleteClass({{ cls.id }})" style="background: transparent; border: none; color: var(--danger); cursor: pointer;"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not classes %}
+                <tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">No classes defined yet.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('saveClassBtn').onclick = async () => {
+        const payload = {
+            class_name: document.getElementById('className').value,
+            teacher_id: document.getElementById('classTeacher').value || null
+        };
+
+        if (!payload.class_name) {
+            alert("Please enter a class name.");
+            return;
+        }
+
+        try {
+            const response = await fetch('/admin/classes/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert("Class created and assigned successfully!");
+                location.reload();
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (e) {
+            alert("Connection failed.");
+        }
+    };
+
+    async function deleteClass(cid) {
+        if (!confirm("Are you sure you want to delete this class? This may affect student enrollments.")) return;
+        try {
+            const response = await fetch('/admin/class/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ class_id: cid })
+            });
+            const data = await response.json();
+            if (data.success) location.reload();
+            else alert("Error: " + data.error);
+        } catch (e) { alert("Action failed."); }
+    }
+</script>
+{% endblock %}

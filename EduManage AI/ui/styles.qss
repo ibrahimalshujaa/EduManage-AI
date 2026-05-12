@@ -1,0 +1,184 @@
+/* Global Styles */
+QMainWindow, QWidget {
+    background-color: #0A0F1D;
+    color: #E2E8F0;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* Sidebar Styles */
+#Sidebar {
+    background-color: #0F172A;
+    border-right: 1px solid #1E293B;
+    min-width: 250px;
+}
+
+#SidebarLogo {
+    font-size: 20px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 20px;
+}
+
+/* Sidebar Profile Card */
+#SidebarProfile {
+    background-color: rgba(30, 41, 59, 0.5);
+    border: 1px solid #1E293B;
+    border-radius: 12px;
+    margin: 15px;
+    padding: 10px;
+}
+
+#SidebarProfileName {
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+#SidebarProfileRole {
+    color: #64748B;
+    font-size: 11px;
+}
+
+/* Navigation Buttons */
+QPushButton#NavButton {
+    background: transparent;
+    border: none;
+    text-align: left;
+    padding: 12px 20px;
+    color: #94A3B8;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    margin: 2px 10px;
+}
+
+QPushButton#NavButton:hover {
+    background: rgba(56, 189, 248, 0.08);
+    color: #38BDF8;
+}
+
+QPushButton#NavButton[active="true"] {
+    background: #38BDF8;
+    color: white;
+    font-weight: 700;
+}
+
+/* Cards */
+#Card {
+    background-color: #0F172A;
+    border: 1px solid #1E293B;
+    border-radius: 16px;
+}
+
+#CardTitle {
+    color: #94A3B8;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+#CardValue {
+    color: white;
+    font-size: 28px;
+    font-weight: 800;
+}
+
+/* Tables */
+QTableWidget {
+    background-color: transparent;
+    border: none;
+    gridline-color: #1E293B;
+    selection-background-color: rgba(56, 189, 248, 0.1);
+    color: #E2E8F0;
+}
+
+QHeaderView::section {
+    background-color: transparent;
+    border: none;
+    border-bottom: 1px solid #1E293B;
+    color: #64748B;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 10px;
+}
+
+QTableWidget::item {
+    padding: 12px;
+    border-bottom: 1px solid #1E293B;
+}
+
+/* Input Fields */
+QLineEdit {
+    background-color: #1E293B;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 10px 15px;
+    color: white;
+}
+
+QLineEdit:focus {
+    border: 1px solid #38BDF8;
+}
+
+/* Buttons */
+#PrimaryButton {
+    background-color: #38BDF8;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 700;
+}
+
+#PrimaryButton:hover {
+    background-color: #0EA5E9;
+}
+
+#GlowButton {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #38BDF8, stop:1 #818CF8);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 25px;
+    font-weight: 800;
+}
+
+/* Progress Bars */
+QProgressBar {
+    background-color: #1E293B;
+    border-radius: 4px;
+    text-align: center;
+}
+
+QProgressBar::chunk {
+    background-color: #38BDF8;
+    border-radius: 4px;
+}
+
+/* Badges */
+#BadgeRiskHigh {
+    background-color: rgba(248, 113, 113, 0.1);
+    color: #F87171;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#BadgeRiskMedium {
+    background-color: rgba(251, 191, 36, 0.1);
+    color: #FBBF24;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#BadgeRiskLow {
+    background-color: rgba(52, 211, 153, 0.1);
+    color: #34D399;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 800;
+}

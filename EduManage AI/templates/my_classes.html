@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}My Classes{% endblock %}
+{% block active_page %}classes{% endblock %}
+{% block page_title %}Academic Assignment{% endblock %}
+{% block page_subtitle %}Overview of your assigned classes and faculty responsibilities{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    {% for cls in classes %}
+    <div class="card" style="border-top: 4px solid var(--accent);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+            <div>
+                <h3 style="font-weight: 800; font-size: 20px;">{{ cls.name }}</h3>
+                <p style="color: var(--text-secondary); font-size: 13px;">Subject: {{ cls.subject }}</p>
+            </div>
+            <div style="background: rgba(56, 189, 248, 0.1); color: var(--accent); padding: 8px; border-radius: 8px;">
+                <i class="fas fa-school"></i>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+            <div>
+                <div style="font-size: 11px; color: var(--text-secondary);">STUDENTS</div>
+                <div style="font-size: 18px; font-weight: 700;">{{ cls.student_count }}</div>
+            </div>
+            <div>
+                <div style="font-size: 11px; color: var(--text-secondary);">CLASS AVG</div>
+                <div style="font-size: 18px; font-weight: 700;">{{ cls.avg_grade }}%</div>
+            </div>
+            <div>
+                <div style="font-size: 11px; color: var(--text-secondary);">AT RISK</div>
+                <div style="font-size: 18px; font-weight: 700; color: var(--danger);">{{ cls.at_risk }}</div>
+            </div>
+            <div>
+                <div style="font-size: 11px; color: var(--text-secondary);">SUCCESS</div>
+                <div style="font-size: 18px; font-weight: 700; color: var(--success);">{{ cls.success }}%</div>
+            </div>
+        </div>
+        
+        <a href="/teacher/students?class={{ cls.name }}" class="btn-primary" style="display: block; text-align: center; text-decoration: none; font-size: 12px;">OPEN CLASS DETAILS</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

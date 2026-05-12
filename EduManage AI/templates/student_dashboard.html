@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Student Portal{% endblock %}
+{% block active_page %}dashboard{% endblock %}
+{% block page_title %}Welcome back, {{ session.full_name }}!{% endblock %}
+{% block page_subtitle %}Institutional Academic Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+    <div class="card" style="padding: 12px;">
+        <div class="card-title" style="font-size: 10px; margin-bottom: 5px;">OVERALL PERFORMANCE</div>
+        <div class="card-value" style="font-size: 18px;">{{ avg_grade }}%</div>
+    </div>
+    <div class="card" style="padding: 12px;">
+        <div class="card-title" style="font-size: 10px; margin-bottom: 5px;">TOTAL ABSENCES</div>
+        <div class="card-value" style="font-size: 18px; color: var(--danger);">{{ student.absences }}</div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 10px; padding: 10px;">
+    <h3 style="font-size: 11px; font-weight: 700; color: var(--accent); margin-bottom: 8px;"><i class="fas fa-school"></i> MY ENROLLED CLASSES</h3>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        {% for cls in enrolled_classes %}
+        <span class="badge" style="padding: 4px 10px; font-size: 10px; background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent); color: var(--accent); border-radius: 4px;">
+            {{ cls.class_name }}
+        </span>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card" style="margin-top: 15px; padding: 10px;">
+    <div style="font-weight: 600; margin-bottom: 10px; font-size: 9px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; opacity: 0.6;">{{ _('performance_summary') }}</div>
+    <canvas id="subjectChart" height="120"></canvas>
+</div>
+
+<div class="card" style="margin-top: 15px; padding: 10px;">
+    <div style="font-weight: 600; margin-bottom: 10px; font-size: 9px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; opacity: 0.6;">{{ _('performance_trend') }}</div>
+    <canvas id="progressChart" height="70"></canvas>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Subject Chart
+    new Chart(document.getElementById('subjectChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ chart_labels|tojson }},
+            datasets: [{
+                label: 'Your Grade',
+                data: {{ chart_user_data|tojson }},
+                backgroundColor: 'rgba(56, 189, 248, 0.6)',
+                borderRadius: 4
+            }, {
+                label: 'Class Avg',
+                data: {{ chart_avg_data|tojson }},
+                backgroundColor: 'rgba(30, 41, 59, 0.8)',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'x',
+            plugins: { 
+                legend: { display: false },
+                tooltip: { backgroundColor: '#0f172a', borderColor: '#1e293b', borderWidth: 1 }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100, grid: { color: '#1E293B' }, ticks: { color: '#94A3B8', font: { size: 10 } } },
+                x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 10 } } }
+            }
+        }
+    });
+
+    // Gauge Chart
+    new Chart(document.getElementById('gaugeChart'), {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [{{ prob }}, {{ 100 - prob }}],
+                backgroundColor: ['#38BDF8', '#1E293B'],
+                borderWidth: 0,
+                circumference: 270,
+                rotation: 225
+            }]
+        },
+        options: {
+            cutout: '80%',
+            plugins: { legend: { display: false }, tooltip: { enabled: false } }
+        }
+    });
+
+    // Progress Chart
+    new Chart(document.getElementById('progressChart'), {
+        type: 'line',
+        data: {
+            labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6'],
+            datasets: [{
+                label: 'GPA',
+                data: [75, 78, 82, 80, 85, 88],
+                borderColor: '#38BDF8',
+                tension: 0.4,
+                fill: true,
+                backgroundColor: 'rgba(56, 189, 248, 0.1)'
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { color: '#1E293B' }, ticks: { color: '#94A3B8' } },
+                x: { grid: { display: false }, ticks: { color: '#94A3B8' } }
+            }
+        }
+    });
+</script>
+{% endblock %}

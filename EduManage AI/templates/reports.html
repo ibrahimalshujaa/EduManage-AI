@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Reports Hub{% endblock %}
+{% block active_page %}reports{% endblock %}
+{% block page_title %}Institutional Analytics{% endblock %}
+{% block page_subtitle %}Comprehensive performance reporting and predictive risk analysis{% endblock %}
+
+{% block content %}
+<div class="stats-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+    <div class="card">
+        <div class="card-title">GENERATED REPORTS</div>
+        <div class="card-value">412 <span class="card-trend trend-up">+8%</span></div>
+    </div>
+    <div class="card">
+        <div class="card-title">RISK ALERTS</div>
+        <div class="card-value">24 <span class="card-trend trend-down">-3</span></div>
+    </div>
+    <div class="card" style="background: var(--accent); color: var(--bg-dark);">
+        <div class="card-title" style="color: var(--bg-dark); opacity: 0.8;">EXPORT READINESS</div>
+        <div class="card-value">READY</div>
+        <button class="btn-primary" style="margin-top: 15px; background: white; width: 100%;">DOWNLOAD ALL PDF</button>
+    </div>
+</div>
+
+<div class="table-container">
+    <h3 style="font-weight: 700; margin-bottom: 20px;">ACADEMIC REPORTS DIRECTORY</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>STUDENT</th>
+                <th>GPA</th>
+                <th>ATTENDANCE</th>
+                <th>PREDICTED</th>
+                <th>RISK STATUS</th>
+                <th>ACTION</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Ahmed Mohamed</td>
+                <td>3.8</td>
+                <td>98%</td>
+                <td>92%</td>
+                <td><span class="badge badge-low">LOW RISK</span></td>
+                <td><a href="#" style="color: var(--accent); text-decoration: none; font-weight: 600;">Open PDF</a></td>
+            </tr>
+            <tr>
+                <td>Sara Ali</td>
+                <td>2.4</td>
+                <td>76%</td>
+                <td>45%</td>
+                <td><span class="badge badge-high">HIGH RISK</span></td>
+                <td><a href="#" style="color: var(--accent); text-decoration: none; font-weight: 600;">Open PDF</a></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

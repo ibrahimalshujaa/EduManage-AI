@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}My Students{% endblock %}
+{% block active_page %}students{% endblock %}
+{% block page_title %}Student Directory{% endblock %}
+{% block page_subtitle %}Managing academic performance and profiles for your assigned students{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div style="background: var(--card-bg); padding: 10px 20px; border-radius: 10px; border: 1px solid var(--border); display: flex; align-items: center; width: 350px;">
+        <i class="fas fa-search" style="color: var(--text-secondary); margin-right: 12px;"></i>
+        <input type="text" placeholder="Search by name or ID..." style="background: transparent; border: none; color: white; outline: none; width: 100%;">
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn-primary" style="background: var(--border); color: white;"><i class="fas fa-filter"></i> Filter</button>
+    </div>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>FULL NAME</th>
+                <th>CLASS</th>
+                <th>AVG GRADE</th>
+                <th>ABSENCES</th>
+                <th>SUCCESS PROB.</th>
+                <th>RISK LEVEL</th>
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td style="font-weight: 600;">{{ student.full_name }}</td>
+                <td>{{ student.class_name }}</td>
+                <td style="font-weight: 700;">{{ student.current_grade }}%</td>
+                <td>{{ student.absences }}</td>
+                <td style="color: var(--accent); font-weight: 700;">{{ student.prob }}%</td>
+                <td>
+                    <span class="badge {% if student.risk == 'High Risk' %}badge-high{% elif student.risk == 'Medium Risk' %}badge-medium{% else %}badge-low{% endif %}">
+                        {{ student.risk }}
+                    </span>
+                </td>
+                <td>
+                    <div style="display: flex; gap: 8px;">
+                        <button title="View Details" style="background: transparent; border: none; color: var(--accent); cursor: pointer;"><i class="fas fa-eye"></i></button>
+                        <a href="/teacher/grades?sid={{ student.id }}" title="Manage Grades" style="color: var(--accent);"><i class="fas fa-edit"></i></a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

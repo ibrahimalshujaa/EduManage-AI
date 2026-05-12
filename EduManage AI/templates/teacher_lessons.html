@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('lessons') }}{% endblock %}
+{% block active_page %}lessons{% endblock %}
+{% block page_title %}{{ _('manage_lessons') }}{% endblock %}
+{% block page_subtitle %}Create and manage educational content for your classes{% endblock %}
+
+{% block content %}
+<div class="stats-grid" style="grid-template-columns: 1fr 2fr; gap: 20px; align-items: start;">
+    <!-- Add Lesson Form -->
+    <div class="card" style="padding: 15px;">
+        <h3 style="font-weight: 700; margin-bottom: 15px; color: var(--accent); font-size: 16px;">{{ _('add_lesson') }}</h3>
+        <div style="display: grid; gap: 10px;">
+            <div>
+                <label style="display: block; font-size: 10px; color: var(--text-secondary); margin-bottom: 5px;">{{ _('class_name') }}</label>
+                <select id="lessonClass" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 6px; outline: none; font-size: 12px;">
+                    {% for c in classes %}
+                    <option value="{{ c.id }}">{{ c.class_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 10px; color: var(--text-secondary); margin-bottom: 5px;">{{ _('lesson_name') }}</label>
+                <input type="text" id="lessonTitle" placeholder="e.g. Physics Intro" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 6px; outline: none; font-size: 12px;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 10px; color: var(--text-secondary); margin-bottom: 5px;">{{ _('subject') }}</label>
+                <input type="text" id="lessonSubject" placeholder="e.g. Mechanics" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 6px; outline: none; font-size: 12px;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 10px; color: var(--text-secondary); margin-bottom: 5px;">{{ _('content') }}</label>
+                <textarea id="lessonContent" rows="3" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 6px; outline: none; resize: vertical; font-size: 12px;"></textarea>
+            </div>
+            <div>
+                <label style="display: block; font-size: 10px; color: var(--text-secondary); margin-bottom: 5px;">{{ _('notes') }}</label>
+                <textarea id="lessonNotes" rows="1" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 6px; outline: none; resize: vertical; font-size: 12px;"></textarea>
+            </div>
+            <div>
+                <label style="display: block; font-size: 10px; color: var(--text-secondary); margin-bottom: 5px;">{{ _('upload_file') }}</label>
+                <div style="background: var(--bg-dark); border: 1px dashed var(--border); padding: 10px; border-radius: 8px; text-align: center;">
+                    <input type="file" id="lessonFile" style="display: none;">
+                    <label for="lessonFile" style="cursor: pointer; color: var(--accent); font-size: 11px;">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 16px; display: block; margin-bottom: 4px;"></i>
+                        <span id="fileNameDisplay">{{ _('upload_file') }}</span>
+                    </label>
+                </div>
+            </div>
+            <div style="padding: 10px; background: rgba(56, 189, 248, 0.03); border-radius: 8px; border: 1px dashed var(--accent);">
+                <label style="display: block; font-size: 10px; color: var(--accent); margin-bottom: 5px; font-weight: 700;">QUIZ (OPTIONAL)</label>
+                <input type="text" id="quizTitle" placeholder="Title" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 6px; border-radius: 4px; outline: none; margin-bottom: 5px; font-size: 11px;">
+                <input type="text" id="quizUrl" placeholder="URL" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 6px; border-radius: 4px; outline: none; font-size: 11px;">
+            </div>
+            <button onclick="saveLesson()" class="btn-primary" style="margin-top: 5px; padding: 10px; font-size: 13px;">{{ _('add_lesson') }}</button>
+        </div>
+    </div>
+
+    <!-- Lessons List -->
+    <div style="display: grid; gap: 15px;">
+        <h3 style="font-weight: 700; margin-bottom: 5px; font-size: 16px;">{{ _('view_lessons') }}</h3>
+        {% for lesson in lessons %}
+        <div class="card" style="padding: 15px; border-left: 3px solid var(--accent);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="font-size: 9px; color: var(--accent); font-weight: 700; text-transform: uppercase;">{{ lesson.class_name }} | {{ lesson.subject }}</div>
+                    <h2 style="font-size: 16px; font-weight: 800; margin: 4px 0;">{{ lesson.title }}</h2>
+                </div>
+                <button onclick="deleteLesson({{ lesson.id }})" style="background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 12px;"><i class="fas fa-trash"></i></button>
+            </div>
+            <div style="margin-top: 8px; color: var(--text-secondary); font-size: 12px; line-height: 1.5;">
+                {{ lesson.content[:150] }}{% if lesson.content|length > 150 %}...{% endif %}
+            </div>
+            {% if lesson.attachment_path %}
+            <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px; padding: 8px; background: rgba(56, 189, 248, 0.03); border-radius: 6px; border: 1px solid var(--border);">
+                <i class="fas fa-paperclip" style="color: var(--accent); font-size: 12px;"></i>
+                <span style="font-size: 11px; color: white;">{{ lesson.attachment_name }}</span>
+            </div>
+            {% endif %}
+            <div style="margin-top: 12px; display: flex; gap: 15px; align-items: center;">
+                <div style="font-size: 10px; color: var(--text-secondary);"><i class="far fa-calendar-alt" style="margin-right: 4px;"></i> {{ lesson.created_at.split(' ')[0] }}</div>
+                {% if lesson.quiz_count > 0 %}
+                <div style="font-size: 10px; color: var(--success);"><i class="fas fa-tasks" style="margin-right: 4px;"></i> {{ _('quizzes') }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        {% if not lessons %}
+        <div class="card" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+            <i class="fas fa-book-open" style="font-size: 40px; margin-bottom: 20px; opacity: 0.3;"></i>
+            <p>No lessons added yet. Start by creating your first lesson.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('lessonFile').addEventListener('change', function(e) {
+        const fileName = e.target.files[0] ? e.target.files[0].name : "{{ _('upload_file') }}";
+        document.getElementById('fileNameDisplay').textContent = fileName;
+    });
+
+    async function saveLesson() {
+        const formData = new FormData();
+        formData.append('class_id', document.getElementById('lessonClass').value);
+        formData.append('title', document.getElementById('lessonTitle').value);
+        formData.append('subject', document.getElementById('lessonSubject').value);
+        formData.append('content', document.getElementById('lessonContent').value);
+        formData.append('notes', document.getElementById('lessonNotes').value);
+        formData.append('quiz_title', document.getElementById('quizTitle').value);
+        formData.append('quiz_url', document.getElementById('quizUrl').value);
+        
+        const fileInput = document.getElementById('lessonFile');
+        if (fileInput.files[0]) {
+            formData.append('file', fileInput.files[0]);
+        }
+
+        if (!document.getElementById('lessonTitle').value || !document.getElementById('lessonContent').value) {
+            alert("Title and Content are required.");
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/teacher/lessons/add', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (e) {
+            alert("Connection failed.");
+        }
+    }
+
+    async function deleteLesson(lid) {
+        if (!confirm("Are you sure you want to delete this lesson?")) return;
+        try {
+            const response = await fetch('/api/teacher/lessons/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lesson_id: lid })
+            });
+            const data = await response.json();
+            if (data.success) location.reload();
+        } catch (e) { alert("Failed."); }
+    }
+</script>
+{% endblock %}

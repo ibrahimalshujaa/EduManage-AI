@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Student Management{% endblock %}
+{% block active_page %}students{% endblock %}
+{% block page_title %}Student Directory{% endblock %}
+{% block page_subtitle %}Manage student enrollments and academic performance profiles{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div style="background: var(--card-bg); padding: 10px 20px; border-radius: 10px; border: 1px solid var(--border); display: flex; align-items: center; width: 350px;">
+        <i class="fas fa-filter" style="color: var(--text-secondary); margin-right: 12px;"></i>
+        <input type="text" placeholder="Filter by Name, ID or Class..." style="background: transparent; border: none; color: white; outline: none; width: 100%;">
+    </div>
+    <button class="btn-primary">+ Add New Student</button>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>FULL NAME</th>
+                <th>CLASS</th>
+                <th>STUDY HOURS</th>
+                <th>ABSENCES</th>
+                <th>PREV. SCORE</th>
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>#{{ student.id }}</td>
+                <td style="font-weight: 600;">{{ student.full_name }}</td>
+                <td>{{ student.class_name }}</td>
+                <td>{{ student.study_hours }}h</td>
+                <td>{{ student.absences }}</td>
+                <td>{{ student.previous_score }}%</td>
+                <td>
+                    <button style="background: transparent; border: none; color: var(--accent); cursor: pointer; margin-right: 10px;"><i class="fas fa-edit"></i></button>
+                    <button style="background: transparent; border: none; color: var(--danger); cursor: pointer;"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

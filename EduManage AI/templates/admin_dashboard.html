@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+{% block active_page %}dashboard{% endblock %}
+{% block page_title %}Institutional Overview{% endblock %}
+{% block page_subtitle %}Real-time intelligence and school-wide performance tracking{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="card">
+        <div class="card-title">{{ _('total_students') }}</div>
+        <div class="card-value">{{ stats.students }} <span class="card-trend trend-up">+12%</span></div>
+    </div>
+    <div class="card">
+        <div class="card-title">{{ _('faculty_members') }}</div>
+        <div class="card-value">{{ stats.teachers }} <span class="card-trend trend-up">+7%</span></div>
+    </div>
+    <div class="card">
+        <div class="card-title">{{ _('active_classes') }}</div>
+        <div class="card-value">{{ stats.classes }} <span class="card-trend">0%</span></div>
+    </div>
+    <div class="card">
+        <div class="card-title">{{ _('success_rate') }}</div>
+        <div class="card-value">78.4% <span class="card-trend trend-up">+6.5%</span></div>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <div class="card">
+        <div style="font-weight: 700; margin-bottom: 20px;">{{ _('performance_summary') }}</div>
+        <canvas id="performanceChart" height="200"></canvas>
+    </div>
+    <div class="card">
+        <div style="font-weight: 700; margin-bottom: 20px;">{{ _('institutional_risk') }}</div>
+        <canvas id="riskDonut" height="200"></canvas>
+    </div>
+</div>
+
+<div class="table-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="font-weight: 700;">{{ _('latest_alerts') }}</h3>
+        <button class="btn-primary" style="font-size: 12px; padding: 6px 12px;">{{ _('view_all') }}</button>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>{{ _('student_name') }}</th>
+                <th>{{ _('grade') }}</th>
+                <th>{{ _('predicted') }}</th>
+                <th>{{ _('prob') }}</th>
+                <th>{{ _('risk_status') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alert in alerts %}
+            <tr>
+                <td style="font-weight: 600;">{{ alert.full_name }}</td>
+                <td>{{ alert.class_name }}</td>
+                <td>{{ alert.predicted_score }}%</td>
+                <td style="color: var(--accent);">{{ alert.success_probability }}%</td>
+                <td>
+                    <span class="badge {% if alert.risk_level == 'High Risk' %}badge-high{% elif alert.risk_level == 'Medium Risk' %}badge-medium{% else %}badge-low{% endif %}">
+                        {{ _(alert.risk_level.lower().replace(' ', '_')) }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not alerts %}
+            <tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No academic alerts at this time.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Performance Chart
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+            datasets: [{
+                label: 'Overall Grade Avg',
+                data: [72, 75, 81, 77, 74, 82],
+                borderColor: '#38BDF8',
+                backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { color: '#1E293B' }, ticks: { color: '#94A3B8' } },
+                x: { grid: { display: false }, ticks: { color: '#94A3B8' } }
+            }
+        }
+    });
+
+    // Risk Donut
+    const ctx2 = document.getElementById('riskDonut').getContext('2d');
+    new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+            datasets: [{
+                data: [65, 25, 10],
+                backgroundColor: ['#22C55E', '#EAB308', '#EF4444'],
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            plugins: { legend: { position: 'bottom', labels: { color: '#94A3B8', padding: 20 } } },
+            cutout: '70%'
+        }
+    });
+</script>
+{% endblock %}

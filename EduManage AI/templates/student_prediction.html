@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}AI Prediction{% endblock %}
+{% block active_page %}prediction{% endblock %}
+{% block page_title %}Predictive Intelligence{% endblock %}
+{% block page_subtitle %}AI-powered forecast of your final academic success outcomes{% endblock %}
+
+{% block content %}
+<div class="charts-grid" style="grid-template-columns: 1fr 1.5fr;">
+    <!-- Success Gauge -->
+    <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+        <div style="font-weight: 700; margin-bottom: 20px;">OVERALL SUCCESS FORECAST</div>
+        <div style="position: relative; height: 220px; width: 220px; display: flex; align-items: center; justify-content: center;">
+            <canvas id="predictionGauge"></canvas>
+            <div style="position: absolute;">
+                <div style="font-size: 42px; font-weight: 800; color: var(--accent);">{{ prob }}%</div>
+                <div style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">Confidence: {{ conf }}%</div>
+            </div>
+        </div>
+        <div style="margin-top: 20px;">
+            <span class="badge {% if risk == 'High Risk' %}badge-high{% elif risk == 'Medium Risk' %}badge-medium{% else %}badge-low{% endif %}" style="font-size: 14px; padding: 6px 15px;">
+                {{ risk }}
+            </span>
+        </div>
+        <p style="margin-top: 15px; font-size: 13px; color: var(--text-secondary);">Predicted Final Score: <span style="color: white; font-weight: 700;">{{ score }}%</span></p>
+    </div>
+
+    <!-- Factors -->
+    <div class="card">
+        <div style="font-weight: 700; margin-bottom: 20px;">FACTORS AFFECTING SUCCESS</div>
+        <div style="display: grid; gap: 20px;">
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
+                    <span>STUDY HOURS ({{ student.study_hours }}h/week)</span>
+                    <span style="color: var(--accent);">Impact: High Positive</span>
+                </div>
+                <div style="background: var(--border); height: 6px; border-radius: 3px; width: 100%;">
+                    <div style="background: var(--accent); height: 100%; border-radius: 3px; width: {{ (student.study_hours / 40) * 100 }}%;"></div>
+                </div>
+            </div>
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
+                    <span>ATTENDANCE ({{ 100 - student.absences*3 }}%)</span>
+                    <span style="color: {% if student.absences > 5 %}var(--danger){% else %}var(--success){% endif %};">Impact: {% if student.absences > 5 %}Negative{% else %}Stable{% endif %}</span>
+                </div>
+                <div style="background: var(--border); height: 6px; border-radius: 3px; width: 100%;">
+                    <div style="background: {% if student.absences > 5 %}var(--danger){% else %}var(--success){% endif %}; height: 100%; border-radius: 3px; width: {{ 100 - student.absences*3 }}%;"></div>
+                </div>
+            </div>
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
+                    <span>PREVIOUS PERFORMANCE ({{ student.previous_score }}%)</span>
+                    <span style="color: var(--accent);">Impact: Baseline</span>
+                </div>
+                <div style="background: var(--border); height: 6px; border-radius: 3px; width: 100%;">
+                    <div style="background: var(--accent); height: 100%; border-radius: 3px; width: {{ student.previous_score }}%;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 15px; background: rgba(56, 189, 248, 0.05); border-radius: 12px; border: 1px dashed var(--accent);">
+            <div style="font-weight: 700; font-size: 13px; color: var(--accent); margin-bottom: 5px;"><i class="fas fa-magic"></i> AI INSIGHT</div>
+            <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">Your study consistency is excellent. Focusing on reducing absences by 2% could increase your success probability by approximately 4.5% based on institutional data trends.</p>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 30px;">
+    <div style="font-weight: 700; margin-bottom: 20px;">FEATURE IMPORTANCE MAP</div>
+    <canvas id="importanceChart" height="150"></canvas>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Gauge
+    new Chart(document.getElementById('predictionGauge'), {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [{{ prob }}, {{ 100 - prob }}],
+                backgroundColor: ['#38BDF8', '#1E293B'],
+                borderWidth: 0,
+                circumference: 270,
+                rotation: 225
+            }]
+        },
+        options: { cutout: '85%', plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+    });
+
+    // Importance Chart
+    new Chart(document.getElementById('importanceChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Study Hours', 'Absences', 'Prev Grade', 'Family Support', 'Class Rank'],
+            datasets: [{
+                label: 'Relative Influence',
+                data: [45, 25, 15, 10, 5],
+                backgroundColor: 'rgba(56, 189, 248, 0.4)',
+                borderColor: '#38BDF8',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true, grid: { color: '#1E293B' }, ticks: { color: '#94A3B8' } },
+                y: { grid: { display: false }, ticks: { color: '#94A3B8' } }
+            }
+        }
+    });
+</script>
+{% endblock %}

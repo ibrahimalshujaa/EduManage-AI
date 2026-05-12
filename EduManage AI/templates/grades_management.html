@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Grades Management{% endblock %}
+{% block active_page %}grades{% endblock %}
+{% block page_title %}Academic Grade Entry{% endblock %}
+{% block page_subtitle %}Manage student academic performance and subjective metrics{% endblock %}
+
+{% block content %}
+<!-- Top Selection Section -->
+<div class="card" style="margin-bottom: 25px; padding: 25px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px;">
+            <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 700; letter-spacing: 0.5px;">SELECT STUDENT & CLASS</label>
+            <select id="enrollmentSelect" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none; font-size: 14px;">
+                <option value="">-- Choose enrollment --</option>
+                {% for e in enrollments %}
+                <option value="{{ e.student_id }}:{{ e.class_id }}">{{ e.full_name }} — {{ e.class_name }} ({{ e.subject }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="display: flex; align-items: flex-end;">
+            <button id="loadGradesBtn" class="btn-primary" style="padding: 12px 30px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                <i class="fas fa-sync-alt" style="margin-right: 8px;"></i> Load Grades
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Grades Table Section -->
+<div class="table-container" style="margin-top: 0; padding: 0; overflow: hidden;">
+    <div style="padding: 20px; border-bottom: 1px solid var(--border); background: rgba(30, 41, 59, 0.4);">
+        <h3 style="font-weight: 700; font-size: 16px; color: white;">ACADEMIC SUBJECTS</h3>
+    </div>
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: rgba(15, 23, 42, 0.5);">
+                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Subject</th>
+                    <th style="padding: 15px 10px; text-align: center; font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Study Hours</th>
+                    <th style="padding: 15px 10px; text-align: center; font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Absences</th>
+                    <th style="padding: 15px 10px; text-align: center; font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Fam. Support</th>
+                    <th style="padding: 15px 10px; text-align: center; font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Midterm</th>
+                    <th style="padding: 15px 10px; text-align: center; font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Final</th>
+                    <th style="padding: 15px 10px; text-align: center; font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Homework</th>
+                    <th style="padding: 15px 20px; text-align: center; font-size: 11px; color: var(--accent); text-transform: uppercase;">Average</th>
+                </tr>
+            </thead>
+            <tbody id="gradesTableBody">
+                <tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--text-secondary);">Please select a student and click "Load Grades".</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="margin-top: 30px; display: flex; justify-content: center;">
+    <button id="saveGradesBtn" class="btn-primary" style="padding: 16px 60px; font-size: 15px; font-weight: 700; border-radius: 12px; box-shadow: 0 4px 20px rgba(56, 189, 248, 0.3);">
+        <i class="fas fa-save" style="margin-right: 10px;"></i> SAVE GRADES & SYNC
+    </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const enrollmentSelect = document.getElementById('enrollmentSelect');
+    const loadBtn = document.getElementById('loadGradesBtn');
+    const tableBody = document.getElementById('gradesTableBody');
+    const saveBtn = document.getElementById('saveGradesBtn');
+
+    let currentStudentId = null;
+    let currentClassId = null;
+
+    loadBtn.onclick = async () => {
+        const val = enrollmentSelect.value;
+        if (!val) { alert("Select student first."); return; }
+        
+        [currentStudentId, currentClassId] = val.split(':');
+
+        try {
+            const response = await fetch(`/api/grades/${currentStudentId}/${currentClassId}`);
+            const data = await response.json();
+            if (data.error) { alert(data.error); return; }
+            renderGrades(data.grades);
+        } catch (e) { alert("Load failed."); }
+    };
+
+    function renderGrades(grades) {
+        if (grades.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--text-secondary);">No subjects.</td></tr>`;
+            return;
+        }
+        tableBody.innerHTML = grades.map(g => `
+            <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 15px 20px; font-weight: 600; color: var(--accent);">${g.subject_name}</td>
+                <td style="padding: 10px;"><input type="number" class="grade-input study" data-subject="${g.subject_name}" value="${g.study_hours}" min="0"></td>
+                <td style="padding: 10px;"><input type="number" class="grade-input abs" data-subject="${g.subject_name}" value="${g.absences}" min="0"></td>
+                <td style="padding: 10px;"><input type="number" class="grade-input support" data-subject="${g.subject_name}" value="${g.family_support}" min="1" max="5"></td>
+                <td style="padding: 10px;"><input type="number" class="grade-input midterm" data-subject="${g.subject_name}" value="${g.midterm}" min="0" max="100"></td>
+                <td style="padding: 10px;"><input type="number" class="grade-input final" data-subject="${g.subject_name}" value="${g.final}" min="0" max="100"></td>
+                <td style="padding: 10px;"><input type="number" class="grade-input homework" data-subject="${g.subject_name}" value="${g.homework}" min="0" max="100"></td>
+                <td style="padding: 15px 20px; text-align: center; font-weight: 800; color: var(--accent); font-size: 16px;">
+                    <span class="avg-display" data-subject="${g.subject_name}">${g.grade.toFixed(1)}</span>%
+                </td>
+            </tr>
+        `).join('');
+
+        document.querySelectorAll('.grade-input').forEach(input => {
+            input.oninput = () => {
+                const row = input.closest('tr');
+                const m = parseFloat(row.querySelector('.midterm').value) || 0;
+                const f = parseFloat(row.querySelector('.final').value) || 0;
+                const h = parseFloat(row.querySelector('.homework').value) || 0;
+                const avg = (m * 0.3) + (f * 0.5) + (h * 0.2);
+                row.querySelector('.avg-display').textContent = avg.toFixed(1);
+            };
+        });
+    }
+
+    saveBtn.onclick = async () => {
+        if (!currentStudentId || !currentClassId) return;
+        const grades = Array.from(document.querySelectorAll('#gradesTableBody tr')).map(row => {
+            return {
+                subject_name: row.querySelector('.midterm').dataset.subject,
+                study_hours: parseFloat(row.querySelector('.study').value) || 0,
+                absences: parseInt(row.querySelector('.abs').value) || 0,
+                family_support: parseInt(row.querySelector('.support').value) || 5,
+                midterm: parseFloat(row.querySelector('.midterm').value) || 0,
+                final: parseFloat(row.querySelector('.final').value) || 0,
+                homework: parseFloat(row.querySelector('.homework').value) || 0,
+                grade: parseFloat(row.querySelector('.avg-display').textContent) || 0
+            };
+        });
+
+        try {
+            const response = await fetch('/api/grades/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ student_id: currentStudentId, class_id: currentClassId, grades: grades })
+            });
+            const data = await response.json();
+            if (data.success) alert("Grades saved and synced!");
+            else alert("Error: " + data.error);
+        } catch (e) { alert("Save failed."); }
+    };
+</script>
+
+<style>
+    .grade-input {
+        width: 100%; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border);
+        color: white; padding: 10px; border-radius: 6px; text-align: center; outline: none; font-size: 13px;
+    }
+</style>
+{% endblock %}

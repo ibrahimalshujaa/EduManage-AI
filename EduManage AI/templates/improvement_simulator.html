@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block title %}Improvement Simulator{% endblock %}
+{% block active_page %}simulator{% endblock %}
+{% block page_title %}Improvement Simulator{% endblock %}
+{% block page_subtitle %}Adjust student factors and see how predicted success changes.{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 30px;">
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <div style="flex: 1;">
+            <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 700;">SELECT STUDENT FROM CLASS</label>
+            <select id="studentSelect" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none;">
+                <option value="">-- Select a Student --</option>
+                {% for student in students %}
+                <option value="{{ student.id }}">{{ student.full_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button id="loadBtn" class="btn-primary" style="margin-top: 20px; padding: 12px 30px;">LOAD STUDENT DATA</button>
+    </div>
+</div>
+
+<div id="simulatorContainer" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 25px; opacity: 0.5; pointer-events: none;">
+    <!-- Control Panel -->
+    <div class="card">
+        <h3 style="font-weight: 700; margin-bottom: 25px; color: var(--accent);"><i class="fas fa-sliders-h"></i> ADJUST PARAMETERS</h3>
+        
+        <div style="display: grid; gap: 25px;">
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px;">
+                    <span>STUDY HOURS (WEEKLY)</span>
+                    <span id="studyVal" style="color: var(--accent); font-weight: 700;">0h</span>
+                </div>
+                <input type="range" class="sim-slider" id="studySlide" min="0" max="50" value="0">
+            </div>
+            
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px;">
+                    <span>ABSENCES (PER SEMESTER)</span>
+                    <span id="absVal" style="color: var(--accent); font-weight: 700;">0</span>
+                </div>
+                <input type="range" class="sim-slider" id="absSlide" min="0" max="30" value="0">
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px;">
+                    <span>FAMILY SUPPORT LEVEL</span>
+                    <span id="supportVal" style="color: var(--accent); font-weight: 700;">0</span>
+                </div>
+                <input type="range" class="sim-slider" id="supportSlide" min="0" max="10" value="0">
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px;">
+                    <span>PREVIOUS GRADE (%)</span>
+                    <span id="prevVal" style="color: var(--accent); font-weight: 700;">0%</span>
+                </div>
+                <input type="range" class="sim-slider" id="prevSlide" min="0" max="100" value="0">
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px;">
+            <label style="display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">TEACHER NOTE / FEEDBACK</label>
+            <textarea id="teacherNote" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; outline: none; height: 80px; font-size: 13px;" placeholder="Add private or public feedback..."></textarea>
+        </div>
+
+        <div style="margin-top: 40px; display: flex; gap: 10px;">
+            <button id="resetBtn" class="btn-primary" style="flex: 1; background: var(--border); color: white;">RESET</button>
+            <button id="syncBtn" class="btn-primary" style="flex: 1.5; background: var(--success); color: white;"><i class="fas fa-sync"></i> SYNC TO STUDENT</button>
+        </div>
+    </div>
+
+    <!-- Result Panel -->
+    <div style="display: flex; flex-direction: column; gap: 25px;">
+        <div class="card" style="text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h3 style="font-weight: 700; margin-bottom: 30px;">SIMULATION RESULT</h3>
+            
+            <div style="display: flex; align-items: center; justify-content: center; gap: 40px; width: 100%;">
+                <div>
+                    <div id="currentProb" style="font-size: 32px; font-weight: 800; color: var(--text-secondary);">0%</div>
+                    <div style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">Current</div>
+                </div>
+                <i class="fas fa-arrow-right" style="font-size: 24px; color: var(--border);"></i>
+                <div>
+                    <div id="simProb" style="font-size: 48px; font-weight: 800; color: var(--accent);">0%</div>
+                    <div style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">Simulated</div>
+                </div>
+            </div>
+
+            <div id="diffMsg" style="margin-top: 30px; font-weight: 700; font-size: 14px; padding: 10px 20px; border-radius: 20px; background: rgba(56, 189, 248, 0.1); color: var(--accent);">
+                No change detected
+            </div>
+        </div>
+
+        <div class="card" style="flex: 1;">
+            <h3 style="font-weight: 700; margin-bottom: 15px;">AI RECOMMENDATION</h3>
+            <div id="aiRec" style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                Select a student and adjust factors to generate academic recommendations.
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 30px;">
+    <h3 style="font-weight: 700; margin-bottom: 20px;">CURRENT VS SIMULATED PREDICTION</h3>
+    <canvas id="compChart" height="150"></canvas>
+</div>
+
+<style>
+    .sim-slider { -webkit-appearance: none; width: 100%; height: 6px; background: var(--border); border-radius: 3px; outline: none; }
+    .sim-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 3px solid var(--bg-dark); }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let studentData = null;
+    let chart = null;
+
+    const els = {
+        student: document.getElementById('studentSelect'),
+        load: document.getElementById('loadBtn'),
+        container: document.getElementById('simulatorContainer'),
+        study: document.getElementById('studySlide'),
+        abs: document.getElementById('absSlide'),
+        support: document.getElementById('supportSlide'),
+        prev: document.getElementById('prevSlide'),
+        studyVal: document.getElementById('studyVal'),
+        absVal: document.getElementById('absVal'),
+        supportVal: document.getElementById('supportVal'),
+        prevVal: document.getElementById('prevVal'),
+        currentProb: document.getElementById('currentProb'),
+        simProb: document.getElementById('simProb'),
+        diffMsg: document.getElementById('diffMsg'),
+        aiRec: document.getElementById('aiRec'),
+        reset: document.getElementById('resetBtn'),
+        sync: document.getElementById('syncBtn'),
+        note: document.getElementById('teacherNote')
+    };
+
+    els.load.onclick = async () => {
+        try {
+            const sid = els.student.value;
+            if (!sid) {
+                alert("Please select a student first.");
+                return;
+            }
+            
+            const response = await fetch(`/api/student/${sid}`);
+            const data = await response.json();
+            
+            if (data.error) {
+                alert("Error loading student data: " + data.error);
+                return;
+            }
+
+            studentData = data;
+            els.container.style.opacity = '1';
+            els.container.style.pointerEvents = 'all';
+            
+            // Load note if exists
+            els.note.value = data.note || "";
+            
+            resetSliders();
+            updateUI();
+            alert("Student data loaded successfully.");
+        } catch (error) {
+            console.error("Load failed:", error);
+            alert("Failed to load student data. Please check connection.");
+        }
+    };
+
+    function resetSliders() {
+        if (!studentData) return;
+        els.study.value = studentData.study;
+        els.abs.value = studentData.abs;
+        els.support.value = studentData.support;
+        els.prev.value = studentData.prev;
+    }
+
+    els.reset.onclick = () => {
+        if (!studentData) {
+            alert("Load a student first before resetting.");
+            return;
+        }
+        resetSliders();
+        updateUI();
+    };
+
+    async function updateUI() {
+        if (!studentData) return;
+        
+        els.studyVal.innerText = els.study.value + 'h';
+        els.absVal.innerText = els.abs.value;
+        els.supportVal.innerText = els.support.value;
+        els.prevVal.innerText = els.prev.value + '%';
+        els.currentProb.innerText = studentData.prob + '%';
+
+        try {
+            const response = await fetch('/api/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    study: parseFloat(els.study.value),
+                    abs: parseInt(els.abs.value),
+                    support: parseInt(els.support.value),
+                    prev: parseFloat(els.prev.value)
+                })
+            });
+            const data = await response.json();
+            
+            els.simProb.innerText = data.probability + '%';
+            const diff = data.probability - studentData.prob;
+            
+            if (diff > 0) {
+                els.diffMsg.innerText = `+${diff.toFixed(1)}% IMPROVEMENT`;
+                els.diffMsg.style.background = 'rgba(34, 197, 94, 0.1)';
+                els.diffMsg.style.color = 'var(--success)';
+                els.simProb.style.color = 'var(--success)';
+            } else if (diff < 0) {
+                els.diffMsg.innerText = `${diff.toFixed(1)}% DECLINE`;
+                els.diffMsg.style.background = 'rgba(239, 68, 68, 0.1)';
+                els.diffMsg.style.color = 'var(--danger)';
+                els.simProb.style.color = 'var(--danger)';
+            } else {
+                els.diffMsg.innerText = 'NO CHANGE';
+                els.diffMsg.style.background = 'rgba(56, 189, 248, 0.1)';
+                els.diffMsg.style.color = 'var(--accent)';
+                els.simProb.style.color = 'var(--accent)';
+            }
+
+            // AI Recommendation logic
+            let rec = "Adjusting parameters to find the best intervention strategy.";
+            if (parseFloat(els.study.value) > studentData.study) rec = "Increasing weekly study hours shows a direct correlation with success probability.";
+            if (parseInt(els.abs.value) < studentData.abs) rec = "Reducing absences significantly lowers the academic risk level for this student.";
+            els.aiRec.innerText = rec;
+
+            updateChart(studentData.prob, data.probability);
+        } catch (error) {
+            console.error("Update UI failed:", error);
+        }
+    }
+
+    function updateChart(curr, sim) {
+        if (chart) chart.destroy();
+        const ctx = document.getElementById('compChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Current Success', 'Simulated Success'],
+                datasets: [{
+                    data: [curr, sim],
+                    backgroundColor: ['#1E293B', '#38BDF8'],
+                    borderRadius: 10
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, max: 100, grid: { color: '#1E293B' }, ticks: { color: '#94A3B8' } },
+                    y: { grid: { display: false }, ticks: { color: '#94A3B8' } }
+                }
+            }
+        });
+    }
+
+    [els.study, els.abs, els.support, els.prev].forEach(s => s.oninput = updateUI);
+    
+    els.sync.onclick = async () => {
+        try {
+            if (!studentData) {
+                alert("Please load a student first.");
+                return;
+            }
+
+            const payload = {
+                student_id: studentData.id,
+                study: parseFloat(els.study.value),
+                abs: parseInt(els.abs.value),
+                support: parseInt(els.support.value),
+                prev: parseFloat(els.prev.value),
+                note: els.note.value
+            };
+
+            const response = await fetch('/api/update_student_info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Academic info synchronized to Student Portal successfully!');
+                // Update local current state to match new reality
+                studentData.study = payload.study;
+                studentData.abs = payload.abs;
+                studentData.support = payload.support;
+                studentData.prev = payload.prev;
+                studentData.prob = parseFloat(els.simProb.innerText);
+                updateUI();
+            } else {
+                alert("Failed to sync data: " + (data.error || "Unknown error"));
+            }
+        } catch (error) {
+            console.error("Sync failed:", error);
+            alert("Connection error during synchronization.");
+        }
+    };
+</script>
+{% endblock %}
